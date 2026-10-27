@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>财务总览 · 财务管理工作台</title>
+<style>
+  /* ============ 设计令牌 ============ */
+  :root{
+    --bg:#f1f5fc;
+    --card:#ffffff;
+    --tx:#1b2a4a;
+    --mu:#7d8aa5;
+    --bd:#e8edf5;
+    --primary:#1769e0;
+    --primary-deep:#0f3c8a;
+    --green:#16a870;
+    --green-bg:#e3f6ec;
+    --orange:#f08a1c;
+    --orange-bg:#fff0e0;
+    --red:#e5483f;
+    --red-bg:#fde8e7;
+    --blue-bg:#e4eeff;
+    --shadow:0 1px 2px rgba(27,42,74,.04),0 4px 16px rgba(27,42,74,.06);
+    --shadow-hover:0 2px 6px rgba(27,42,74,.08),0 8px 24px rgba(27,42,74,.10);
+    --radius:14px;
+    --radius-sm:8px;
+    padding-top:env(safe-area-inset-top,0px);
+  }
+  [data-theme="dark"]{
+    --bg:#0e1626;
+    --card:#172238;
+    --tx:#e6ecf8;
+    --mu:#8fa0c0;
+    --bd:#26344f;
+    --primary:#3b82f6;
+    --primary-deep:#1d4ed8;
+    --green:#34d399;
+    --green-bg:#0f2a1f;
+    --orange:#fbbf24;
+    --orange-bg:#2a1f0a;
+    --red:#f87171;
+    --red-bg:#2a1414;
+    --blue-bg:#15263f;
+    --shadow:0 1px 2px rgba(0,0,0,.2),0 4px 16px rgba(0,0,0,.25);
+    --shadow-hover:0 2px 6px rgba(0,0,0,.25),0 8px 24px rgba(0,0,0,.35);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e1626;--card:#172238;--tx:#e6ecf8;--mu:#8fa0c0;--bd:#26344f;
+      --primary:#3b82f6;--primary-deep:#1d4ed8;
+      --green:#34d399;--green-bg:#0f2a1f;
+      --orange:#fbbf24;--orange-bg:#2a1f0a;
+      --red:#f87171;--red-bg:#2a1414;
+      --blue-bg:#15263f;
+      --shadow:0 1px 2px rgba(0,0,0,.2),0 4px 16px rgba(0,0,0,.25);
+      --shadow-hover:0 2px 6px rgba(0,0,0,.25),0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+
+  /* ============ 基础 ============ */
+  *{box-sizing:border-box}
+  html{scroll-padding-top:env(safe-area-inset-top,0px)}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bg);
+    color:var(--tx);
+    font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    transition:background .2s,color .2s;
+  }
+
+  /* ============ 顶栏 ============ */
+  .topbar{
+    position:sticky;top:0;z-index:10;
+    background:var(--card);
+    border-bottom:1px solid var(--bd);
+    padding:14px 24px;
+    display:flex;align-items:center;gap:16px;
+    box-shadow:0 1px 0 rgba(27,42,74,.02);
+  }
+  .topbar .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--tx)}
+  .topbar .brand .logo{
+    width:32px;height:32px;border-radius:9px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-deep));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;
+    box-shadow:0 2px 8px rgba(23,105,224,.35);
+  }
+  .topbar .crumb{color:var(--mu);font-size:13px;margin-left:4px}
+  .topbar .crumb b{color:var(--tx);font-weight:600}
+  .topbar .spacer{flex:1}
+  .topbar .ctrl{display:flex;align-items:center;gap:10px}
+  .month-picker{
+    display:flex;align-items:center;gap:8px;
+    background:var(--bg);border:1px solid var(--bd);
+    border-radius:var(--radius-sm);padding:6px 12px;font-size:13px;color:var(--tx);
+    cursor:pointer;transition:border-color .15s;
+  }
+  .month-picker:hover{border-color:var(--primary)}
+  .icon-btn{
+    width:34px;height:34px;border-radius:var(--radius-sm);
+    background:var(--bg);border:1px solid var(--bd);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:var(--tx);
+    transition:all .15s;
+  }
+  .icon-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+  /* ============ 主体 ============ */
+  main{max-width:1320px;margin:0 auto;padding:24px}
+  .page-head{margin-bottom:20px}
+  .page-head h1{margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em}
+  .page-head p{margin:6px 0 0;color:var(--mu);font-size:13px}
+
+  /* ============ KPI 四宫格 ============ */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+  .kpi{
+    background:var(--card);border-radius:var(--radius);padding:18px;
+    box-shadow:var(--shadow);position:relative;overflow:hidden;
+    transition:transform .15s,box-shadow .15s;
+  }
+  .kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--primary))}
+  .kpi .label{color:var(--mu);font-size:12px;margin:0 0 6px}
+  .kpi .value{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+  .kpi .value .unit{font-size:14px;font-weight:500;color:var(--mu);margin-left:2px}
+  .kpi .delta{display:inline-flex;align-items:center;gap:3px;margin-top:8px;font-size:12px;padding:2px 8px;border-radius:20px;font-weight:500}
+  .kpi .delta.up{color:var(--green);background:var(--green-bg)}
+  .kpi .delta.down{color:var(--red);background:var(--red-bg)}
+  .kpi .delta.warn{color:var(--orange);background:var(--orange-bg)}
+  .kpi .delta .arrow{font-size:10px}
+
+  /* ============ 卡片通用 ============ */
+  .grid{display:grid;gap:16px}
+  .grid.cols-2{grid-template-columns:1.4fr 1fr}
+  .grid.cols-2-even{grid-template-columns:1fr 1fr}
+  .card{
+    background:var(--card);border-radius:var(--radius);padding:18px;
+    box-shadow:var(--shadow);
+  }
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .card-head h3{
+    margin:0;font-size:15px;font-weight:600;
+    border-left:3px solid var(--primary);padding-left:9px;
+  }
+  .card-head .sub{font-size:12px;color:var(--mu)}
+  .card-head .more{font-size:12px;color:var(--primary);cursor:pointer;text-decoration:none}
+  .card-head .more:hover{text-decoration:underline}
+
+  /* ============ 表格 ============ */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{
+    text-align:left;font-weight:500;color:var(--mu);
+    padding:9px 10px;border-bottom:1px solid var(--bd);white-space:nowrap;
+  }
+  tbody td{padding:11px 10px;border-bottom:1px solid var(--bd);white-space:nowrap}
+  tbody tr{transition:background .12s}
+  tbody tr:hover{background:var(--bg)}
+  tbody tr:last-child td{border-bottom:0}
+  .tag{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:500;line-height:1.6}
+  .tag.g{background:var(--green-bg);color:var(--green)}
+  .tag.o{background:var(--orange-bg);color:var(--orange)}
+  .tag.r{background:var(--red-bg);color:var(--red)}
+  .tag.b{background:var(--blue-bg);color:var(--primary)}
+  .amt{font-variant-numeric:tabular-nums;font-weight:500}
+  .due-soon{color:var(--red);font-weight:600}
+
+  /* ============ 列表 ============ */
+  .list{display:flex;flex-direction:column}
+  .list-item{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 0;border-bottom:1px solid var(--bd);
+  }
+  .list-item:last-child{border-bottom:0}
+  .list-item .dot{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+  .list-item .dot.warn{background:var(--orange)}
+  .list-item .dot.danger{background:var(--red)}
+  .list-item .txt{flex:1;min-width:0;color:var(--tx);font-size:13px}
+  .list-item .val{color:var(--mu);font-size:12px;font-variant-numeric:tabular-nums;flex:none}
+  .list-item .val .strong{color:var(--tx);font-weight:600}
+
+  /* ============ 流程节点 ============ */
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+  .flow-node{
+    flex:1;min-width:120px;text-align:center;padding:12px 8px;
+    background:var(--bg);border-radius:var(--radius-sm);
+    position:relative;
+  }
+  .flow-node .num{font-size:22px;font-weight:700;color:var(--primary);line-height:1}
+  .flow-node .num .u{font-size:12px;font-weight:500;color:var(--mu);margin-left:2px}
+  .flow-node .desc{font-size:12px;color:var(--mu);margin-top:5px}
+  .flow-arrow{
+    display:flex;align-items:center;color:var(--primary);font-size:14px;
+    padding:0 6px;flex:none;
+  }
+
+  /* ============ SVG 图表 ============ */
+  .chart-wrap{width:100%}
+  svg.chart{width:100%;height:auto;display:block}
+  .chart-legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:10px;font-size:12px;color:var(--mu)}
+  .chart-legend .li{display:inline-flex;align-items:center;gap:6px}
+  .chart-legend .sw{width:10px;height:10px;border-radius:2px}
+  .bar-rect{transition:opacity .15s}
+  .bar-rect:hover{opacity:.8}
+  .bar-dot:hover{r:5}
+
+  /* ============ 环形图图例 ============ */
+  .donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .donut-wrap svg{flex:none;width:160px;height:160px}
+  .donut-legend{flex:1;min-width:140px}
+  .donut-legend .row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px}
+  .donut-legend .row .sw{width:10px;height:10px;border-radius:2px;flex:none}
+  .donut-legend .row .name{flex:1;color:var(--tx)}
+  .donut-legend .row .val{color:var(--mu);font-variant-numeric:tabular-nums}
+  .donut-legend .row .pct{color:var(--tx);font-weight:600;font-variant-numeric:tabular-nums;min-width:42px;text-align:right}
+
+  /* ============ 响应式 ============ */
+  @media (max-width:980px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .grid.cols-2,.grid.cols-2-even{grid-template-columns:1fr}
+  }
+  @media (max-width:560px){
+    main{padding:16px}
+    .topbar{padding:12px 16px}
+    .topbar .crumb{display:none}
+    .kpis{grid-template-columns:1fr}
+    .flow{flex-direction:column}
+    .flow-arrow{transform:rotate(90deg);padding:4px 0}
+  }
+
+  /* ============ 减少动效偏好 ============ */
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">💰</div>
+    FinDesk
+  </div>
+  <div class="crumb">财务工作台 / <b>财务总览</b></div>
+  <div class="spacer"></div>
+  <div class="ctrl">
+    <div class="month-picker" id="monthPicker">📅 2024年5月</div>
+    <button class="icon-btn" id="themeBtn" title="切换主题" aria-label="切换明暗主题">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="page-head">
+    <h1>财务总览</h1>
+    <p>收支 · 应收应付 · 资金 · 报表 一体化视图，实时掌握企业经营全貌</p>
+  </div>
+
+  <!-- ===== KPI 四宫格 ===== -->
+  <section class="kpis" aria-label="关键指标">
+    <div class="kpi" style="--accent:var(--primary)">
+      <p class="label">本月总收入</p>
+      <p class="value">¥1,540,000</p>
+      <span class="delta up"><span class="arrow">▲</span>较上月 +8.5%</span>
+    </div>
+    <div class="kpi" style="--accent:var(--orange)">
+      <p class="label">本月总支出</p>
+      <p class="value">¥890,000</p>
+      <span class="delta warn"><span class="arrow">▲</span>较上月 +6.2%</span>
+    </div>
+    <div class="kpi" style="--accent:var(--green)">
+      <p class="label">本月利润</p>
+      <p class="value">¥650,000</p>
+      <span class="delta up"><span class="arrow">▲</span>较上月 +12.3%</span>
+    </div>
+    <div class="kpi" style="--accent:#8b6cf0">
+      <p class="label">资金余额</p>
+      <p class="value">¥2,860,000</p>
+      <span class="delta up"><span class="arrow">▲</span>较上月 +4.1%</span>
+    </div>
+  </section>
+
+  <!-- ===== 第一行：收支趋势 + 应收账龄 ===== -->
+  <section class="grid cols-2" style="margin-bottom:16px">
+    <!-- 收支趋势 -->
+    <div class="card">
+      <div class="card-head">
+        <h3>收支趋势（近6月）</h3>
+        <span class="sub">单位：万元</span>
+      </div>
+      <div class="chart-wrap" id="trendChart"></div>
+    </div>
+    <!-- 应收账龄 -->
+    <div class="card">
+      <div class="card-head">
+        <h3>应收账款账龄分析</h3>
+        <span class="sub">应收总额 ¥1,260,000</span>
+      </div>
+      <div class="donut-wrap" id="agingDonut"></div>
+    </div>
+  </section>
+
+  <!-- ===== 第二行：应付到期提醒 ===== -->
+  <section class="card" style="margin-bottom:16px">
+    <div class="card-head">
+      <h3>应付账款到期提醒</h3>
+      <a class="more" href="#">查看全部 →</a>
+    </div>
+    <table>
+      <thead>
+        <tr><th>供应商</th><th>应付金额</th><th>到期日</th><th>剩余</th><th>状态</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>华东供应商有限公司</td>
+          <td class="amt">¥320,000</td>
+          <td>2024-05-10</td>
+          <td class="due-soon">3天</td>
+          <td><span class="tag o">待付款</span></td>
+        </tr>
+        <tr>
+          <td>深圳市XX科技</td>
+          <td class="amt">¥180,000</td>
+          <td>2024-05-15</td>
+          <td>8天</td>
+          <td><span class="tag o">待付款</span></td>
+        </tr>
+        <tr>
+          <td>上海材料供应商</td>
+          <td class="amt">¥120,000</td>
+          <td>2024-05-20</td>
+          <td>13天</td>
+          <td><span class="tag b">审批中</span></td>
+        </tr>
+        <tr>
+          <td>北京设备有限公司</td>
+          <td class="amt">¥90,000</td>
+          <td>2024-05-25</td>
+          <td>18天</td>
+          <td><span class="tag b">已安排</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== 第三行：本周待办 + 经营摘要 ===== -->
+  <section class="grid cols-2-even" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-head"><h3>本周待办</h3><span class="sub">4 项</span></div>
+      <div class="list">
+        <div class="list-item"><span class="dot warn"></span><span class="txt">审批5月费用报销单（3条）</span><span class="val">05-07</span></div>
+        <div class="list-item"><span class="dot warn"></span><span class="txt">跟进XX客户应收账款回款</span><span class="val">05-08</span></div>
+        <div class="list-item"><span class="dot"></span><span class="txt">处理4张待认证发票</span><span class="val">05-09</span></div>
+        <div class="list-item"><span class="dot"></span><span class="txt">核对4月银行对账单</span><span class="val">05-10</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>经营摘要</h3><span class="sub">本月</span></div>
+      <div class="list">
+        <div class="list-item"><span class="dot"></span><span class="txt">新增客户收入</span><span class="val"><span class="strong">¥880,000</span></span></div>
+        <div class="list-item"><span class="dot"></span><span class="txt">主营业务收入</span><span class="val"><span class="strong">¥1,320,000</span></span></div>
+        <div class="list-item"><span class="dot"></span><span class="txt">其他收入</span><span class="val"><span class="strong">¥220,000</span></span></div>
+        <div class="list-item"><span class="dot"></span><span class="txt">期间费用</span><span class="val"><span class="strong">¥433,000</span></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 第四行：财务全流程概览 ===== -->
+  <section class="card">
+    <div class="card-head"><h3>财务全流程概览</h3><span class="sub">本月业务笔数</span></div>
+    <div class="flow">
+      <div class="flow-node"><div class="num">10<span class="u">笔</span></div><div class="desc">收入确认</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><div class="num">8<span class="u">笔</span></div><div class="desc">应收账款</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><div class="num">12<span class="u">笔</span></div><div class="desc">应付账款</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><div class="num">6<span class="u">笔</span></div><div class="desc">费用报销</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><div class="num">4<span class="u">笔</span></div><div class="desc">发票管理</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><div class="num">3<span class="u">笔</span></div><div class="desc">银行对账</div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ===== 主题切换 ===== */
+const themeBtn=document.getElementById('themeBtn');
+themeBtn.addEventListener('click',()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');
+});
+
+/* ===== 工具：格式化数字 ===== */
+const fmt=n=>(+n).toLocaleString('zh-CN');
+const pct=(v,t)=>(v/t*100).toFixed(1);
+
+/* ===== 配色 ===== */
+const PALETTE=['#1769e0','#ff9a3c','#16a870','#8b6cf0','#ef5350'];
+
+/* ===== 1. 收支趋势 柱+折线组合图 ===== */
+function renderTrend(){
+  const months=['12月','1月','2月','3月','4月','5月'];
+  const income=[880,1050,1000,1340,1440,1650];
+  const expense=[580,760,740,900,1080,1200];
+  const profit=[300,430,390,760,890,1130];
+  // 折线用利润，右轴（万元，与左轴同量纲这里共用）
+
+  const W=560,H=240,L=36,R=20,T=12,B=28;
+  const mx=Math.ceil(Math.max(...income,...expense,...profit)*1.15/100)*100;
+  const w=(W-L-R)/months.length;
+
+  // 网格线 + Y轴刻度
+  let grid='';
+  for(let i=0;i<=4;i++){
+    const y=T+(H-T-B)*(1-i/4);
+    grid+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--bd)" stroke-dasharray="${i===0?'0':'2 3'}"/>`;
+    grid+=`<text x="${L-6}" y="${y+3}" text-anchor="end" font-size="10" fill="var(--mu)">${Math.round(mx*i/4)}</text>`;
+  }
+  // X轴标签
+  let xlab='';
+  months.forEach((m,i)=>{xlab+=`<text x="${L+w*i+w/2}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--mu)">${m}</text>`});
+
+  // 柱（收入、支出）
+  const series=[{data:income,c:PALETTE[0]},{data:expense,c:PALETTE[1]}];
+  const bw=w*0.32;
+  let bars='';
+  series.forEach((s,k)=>{
+    s.data.forEach((v,i)=>{
+      const hh=(H-T-B)*v/mx;
+      const x=L+w*i+w/2+(k-0.5)*bw-bw/2;
+      const y=H-B-hh;
+      bars+=`<rect class="bar-rect" x="${x}" y="${y}" width="${bw-2}" height="${hh}" rx="3" fill="${s.c}"><title>${months[i]} ${k?'支出':'收入'}：${v}万</title></rect>`;
+    });
+  });
+
+  // 折线（利润）
+  let line='<polyline fill="none" stroke="'+PALETTE[2]+'" stroke-width="2.2" stroke-linejoin="round" points="';
+  let dots='';
+  profit.forEach((v,i)=>{
+    const x=L+w*i+w/2;
+    const y=H-B-(H-T-B)*v/mx;
+    line+=`${x},${y} `;
+    dots+=`<circle class="bar-dot" cx="${x}" cy="${y}" r="3.5" fill="var(--card)" stroke="${PALETTE[2]}" stroke-width="2"><title>${months[i]} 利润：${v}万</title></circle>`;
+  });
+  line+='" />';
+
+  const svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="近6个月收入支出利润趋势图">
+    ${grid}${xlab}${bars}${line}${dots}
+  </svg>`;
+  const legend=`<div class="chart-legend">
+    <span class="li"><span class="sw" style="background:${PALETTE[0]}"></span>收入</span>
+    <span class="li"><span class="sw" style="background:${PALETTE[1]}"></span>支出</span>
+    <span class="li"><span class="sw" style="background:${PALETTE[2]};border-radius:50%"></span>利润</span>
+  </div>`;
+  document.getElementById('trendChart').innerHTML=legend+svg;
+}
+
+/* ===== 2. 应收账龄 环形图 ===== */
+function renderAging(){
+  const data=[
+    {name:'未到期',v:420000,c:PALETTE[2]},
+    {name:'1-30天',v:380000,c:PALETTE[0]},
+    {name:'31-60天',v:260000,c:PALETTE[1]},
+    {name:'61-90天',v:120000,c:'#8b6cf0'},
+    {name:'90天以上',v:80000,c:PALETTE[4]},
+  ];
+  const total=data.reduce((s,d)=>s+d.v,0); // 1,260,000
+  const cx=60,cy=60,r=42,sw=14;
+  const C=2*Math.PI*r;
+  let off=0,arcs='';
+  data.forEach(d=>{
+    const len=C*d.v/total;
+    arcs+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.c}" stroke-width="${sw}"
+      stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}"
+      transform="rotate(-90 ${cx} ${cy})"><title>${d.name}：¥${fmt(d.v)}（${pct(d.v,total)}%）</title></circle>`;
+    off+=len;
+  });
+  const center=`<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="10" fill="var(--mu)">合计</text>
+    <text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--tx)">¥${fmt(total)}</text>`;
+  const svg=`<svg viewBox="0 0 120 120" role="img" aria-label="应收账款账龄分布环形图">${arcs}${center}</svg>`;
+  const legend='<div class="donut-legend">'+data.map(d=>`
+    <div class="row">
+      <span class="sw" style="background:${d.c}"></span>
+      <span class="name">${d.name}</span>
+      <span class="val">¥${fmt(d.v)}</span>
+      <span class="pct">${pct(d.v,total)}%</span>
+    </div>`).join('')+'</div>';
+  document.getElementById('agingDonut').innerHTML=svg+legend;
+}
+
+renderTrend();
+renderAging();
+</script>
+</body>
+</html>
